@@ -367,7 +367,7 @@ class TestAzureExporter(unittest.TestCase):
 
         with mock.patch('requests.post') as post:
             post.return_value = None
-            exporter._transmission_routine()
+            exporter._transmit_from_storage()
 
     def test_transmission_request_exception(self):
         exporter = trace_exporter.AzureExporter(
@@ -376,7 +376,7 @@ class TestAzureExporter(unittest.TestCase):
         )
         exporter.storage.put([1, 2, 3])
         with mock.patch('requests.post', throw(Exception)):
-            exporter._transmission_routine()
+            exporter._transmit_from_storage()
         self.assertIsNone(exporter.storage.get())
         self.assertEqual(len(os.listdir(exporter.storage.path)), 1)
 
@@ -388,7 +388,7 @@ class TestAzureExporter(unittest.TestCase):
         exporter.storage.put([1, 2, 3])
         with mock.patch('opencensus.ext.azure.common.storage.LocalFileBlob.lease') as lease:  # noqa: E501
             lease.return_value = False
-            exporter._transmission_routine()
+            exporter._transmit_from_storage()
         self.assertTrue(exporter.storage.get())
 
     def test_transmission_response_exception(self):
@@ -400,7 +400,7 @@ class TestAzureExporter(unittest.TestCase):
         with mock.patch('requests.post') as post:
             post.return_value = MockResponse(200, None)
             del post.return_value.text
-            exporter._transmission_routine()
+            exporter._transmit_from_storage()
         self.assertIsNone(exporter.storage.get())
         self.assertEqual(len(os.listdir(exporter.storage.path)), 0)
 
@@ -413,7 +413,7 @@ class TestAzureExporter(unittest.TestCase):
         exporter.storage.put([1, 2, 3])
         with mock.patch('requests.post') as post:
             post.return_value = MockResponse(200, 'unknown')
-            exporter._transmission_routine()
+            exporter._transmit_from_storage()
         self.assertIsNone(exporter.storage.get())
         self.assertEqual(len(os.listdir(exporter.storage.path)), 0)
 
@@ -425,7 +425,7 @@ class TestAzureExporter(unittest.TestCase):
         exporter.storage.put([1, 2, 3])
         with mock.patch('requests.post') as post:
             post.return_value = MockResponse(206, 'unknown')
-            exporter._transmission_routine()
+            exporter._transmit_from_storage()
         self.assertIsNone(exporter.storage.get())
         self.assertEqual(len(os.listdir(exporter.storage.path)), 1)
 
@@ -452,7 +452,7 @@ class TestAzureExporter(unittest.TestCase):
                     },
                 ],
             }))
-            exporter._transmission_routine()
+            exporter._transmit_from_storage()
         self.assertEqual(len(os.listdir(exporter.storage.path)), 1)
         self.assertEqual(exporter.storage.get().get(), (3,))
 
@@ -474,7 +474,7 @@ class TestAzureExporter(unittest.TestCase):
                     },
                 ],
             }))
-            exporter._transmission_routine()
+            exporter._transmit_from_storage()
         self.assertEqual(len(os.listdir(exporter.storage.path)), 0)
 
     def test_transmission_206_bogus(self):
@@ -494,7 +494,7 @@ class TestAzureExporter(unittest.TestCase):
                     },
                 ],
             }))
-            exporter._transmission_routine()
+            exporter._transmit_from_storage()
         self.assertIsNone(exporter.storage.get())
         self.assertEqual(len(os.listdir(exporter.storage.path)), 0)
 
@@ -506,7 +506,7 @@ class TestAzureExporter(unittest.TestCase):
         exporter.storage.put([1, 2, 3])
         with mock.patch('requests.post') as post:
             post.return_value = MockResponse(400, '{}')
-            exporter._transmission_routine()
+            exporter._transmit_from_storage()
         self.assertEqual(len(os.listdir(exporter.storage.path)), 0)
 
     def test_transmission_500(self):
@@ -517,7 +517,7 @@ class TestAzureExporter(unittest.TestCase):
         exporter.storage.put([1, 2, 3])
         with mock.patch('requests.post') as post:
             post.return_value = MockResponse(500, '{}')
-            exporter._transmission_routine()
+            exporter._transmit_from_storage()
         self.assertIsNone(exporter.storage.get())
         self.assertEqual(len(os.listdir(exporter.storage.path)), 1)
 
